@@ -1,4 +1,4 @@
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API = process.env.NEXT_PUBLIC_API_URL || "https://hunarmand-project.onrender.com";
 
 export type Role = "buyer" | "artisan" | "admin";
 
@@ -70,7 +70,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   try {
     res = await fetch(`${API}${path}`, { ...init, headers });
   } catch {
-    throw new Error("Пайвастшавӣ ба сервер қатъ аст. Backend-ро дар http://localhost:8000 фаъол кунед.");
+    throw new Error("Пайвастшавӣ ба сервер қатъ аст. Backend-и Render-ро санҷед.");
   }
   if (!res.ok) {
     let detail = "Хатогии шабака";
