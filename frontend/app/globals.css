@@ -1,0 +1,208 @@
+@import "tailwindcss";
+
+:root {
+  --navy: #1b1540;
+  --navy-2: #2a1f5c;
+  --teal: #0f8f86;
+  --teal-dark: #0b6f69;
+  --ruby: #c41e3a;
+  --rose: #e85d75;
+  --saffron: #e8a317;
+  --gold: #d4a017;
+  --amber: #f4c95d;
+  --emerald: #1f8a4c;
+  --azure: #2b6cb0;
+  --terracotta: #c45c26;
+  --violet: #6d4aff;
+  --cream: #fff6ea;
+  --sand: #f3e2c8;
+  --ink: #1a1430;
+  --page-from: #fff3e4;
+  --page-via: #fde8ef;
+  --page-to: #e4f4f1;
+}
+
+@theme inline {
+  --color-navy: var(--navy);
+  --color-navy-2: var(--navy-2);
+  --color-teal: var(--teal);
+  --color-teal-dark: var(--teal-dark);
+  --color-ruby: var(--ruby);
+  --color-rose: var(--rose);
+  --color-saffron: var(--saffron);
+  --color-gold: var(--gold);
+  --color-amber: var(--amber);
+  --color-emerald: var(--emerald);
+  --color-azure: var(--azure);
+  --color-terracotta: var(--terracotta);
+  --color-violet: var(--violet);
+  --color-cream: var(--cream);
+  --color-sand: var(--sand);
+  --color-ink: var(--ink);
+  --font-sans: "Segoe UI", Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  color: var(--ink);
+  font-family: "Segoe UI", Arial, sans-serif;
+  background:
+    radial-gradient(circle at 8% 12%, rgba(232, 163, 23, 0.28), transparent 32%),
+    radial-gradient(circle at 92% 8%, rgba(196, 30, 58, 0.18), transparent 30%),
+    radial-gradient(circle at 86% 88%, rgba(15, 143, 134, 0.22), transparent 34%),
+    radial-gradient(circle at 12% 86%, rgba(109, 74, 255, 0.12), transparent 28%),
+    linear-gradient(165deg, var(--page-from), var(--page-via) 48%, var(--page-to));
+}
+
+.page-bg {
+  min-height: 100vh;
+  background: transparent;
+}
+
+.tile-bg,
+.header-bg {
+  background-color: #1b1540;
+  background-image:
+    linear-gradient(110deg, rgba(196, 30, 58, 0.55), rgba(27, 21, 64, 0.2) 38%, rgba(15, 143, 134, 0.45)),
+    radial-gradient(circle at 18% 20%, rgba(244, 201, 93, 0.35) 0 10%, transparent 12%),
+    radial-gradient(circle at 82% 80%, rgba(232, 93, 117, 0.28) 0 12%, transparent 14%);
+}
+
+.header-bg {
+  border-bottom: 3px solid #e8a317;
+  box-shadow: 0 12px 40px rgba(27, 21, 64, 0.28);
+}
+
+.card-shell {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(212, 160, 23, 0.22);
+  border-radius: 20px;
+  box-shadow: 0 18px 50px rgba(27, 21, 64, 0.1);
+  backdrop-filter: blur(8px);
+}
+
+.premium-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.premium-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, rgba(244, 201, 93, 0.22), transparent 32%),
+    radial-gradient(circle at 90% 12%, rgba(196, 30, 58, 0.16), transparent 30%);
+}
+
+.product-card {
+  transform: translateY(0);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(196, 30, 58, 0.35);
+  box-shadow: 0 24px 60px rgba(27, 21, 64, 0.16);
+}
+
+.btn-teal {
+  background: linear-gradient(135deg, #c41e3a, #e85d75 42%, #e8a317);
+  color: white;
+  border-radius: 12px;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(196, 30, 58, 0.25);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.btn-teal:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, #f4c95d, #e8a317);
+  color: #1b1540;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.input {
+  width: 100%;
+  border: 1px solid #ead7b5;
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  outline: none;
+  background: #fffdf8;
+}
+
+.input:focus {
+  border-color: #e8a317;
+  box-shadow: 0 0 0 3px rgba(232, 163, 23, 0.22);
+}
+
+.sidebar {
+  background: linear-gradient(180deg, #1b1540 0%, #c41e3a 55%, #0f8f86 140%);
+}
+
+.bottom-22 {
+  bottom: 5.5rem;
+}
+
+header a,
+header button {
+  cursor: pointer;
+}
+
+.section-title {
+  background: linear-gradient(90deg, #c41e3a, #e8a317 40%, #0f8f86);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.price-tag {
+  color: #c41e3a;
+  font-weight: 700;
+}
+
+.accent-bar {
+  height: 4px;
+  background: linear-gradient(90deg, #c41e3a, #e8a317, #0f8f86, #2b6cb0, #6d4aff);
+  border-radius: 999px;
+}
+
+.grad-ruby {
+  background: linear-gradient(90deg, #c41e3a, #e85d75);
+}
+
+.grad-gold {
+  background: linear-gradient(90deg, #e8a317, #c45c26);
+}
+
+.grad-green {
+  background: linear-gradient(90deg, #1f8a4c, #0f8f86);
+}
+
+.grad-blue {
+  background: linear-gradient(90deg, #6d4aff, #2b6cb0);
+}
+
+.grad-mix {
+  background: linear-gradient(90deg, #c41e3a, #e8a317, #0f8f86, #2b6cb0);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(12px);
+}
