@@ -4,9 +4,9 @@
 
 ## Стек
 
-- Frontend: Next.js + TypeScript + Tailwind CSS
-- Backend: Python FastAPI + SQLAlchemy
-- Database: PostgreSQL (доимӣ дар Render/Supabase). Локалӣ SQLite (`sqlite:///./hunarmand.db`)
+- Frontend: Next.js + TypeScript + Tailwind CSS (Vercel)
+- Backend API: `/api` дар худи Next.js + PostgreSQL-и Vercel (маҳсулот гум намешавад)
+- FastAPI (ихтиёрӣ) барои Render; сомонаи hunarmand.tj аз базаи Vercel кор мекунад
 
 ## Оғоз
 
@@ -38,6 +38,15 @@ API: http://localhost:8000/docs
 - `categories`, `orders`, `custom_orders` — категорияҳо ва фармоишҳо
 
 CRUD: `POST/GET/PUT/DELETE /products`, `GET/PUT /auth/me`, `GET /admin/users`.
+
+### Vercel Postgres (асосӣ барои hunarmand.tj)
+
+1. Vercel → лоиҳаи frontend → **Storage** → **Create Database** → **Postgres**
+2. Ба Environment пайваст шавад: `POSTGRES_URL` (худкор)
+3. `NEXT_PUBLIC_API_URL=/api` (аллакай дар `.env.production`)
+4. Redeploy. `/api/health` бояд `"persistent": true` нишон диҳад
+
+Маҳсулот, профил ва фармоишҳо дар ҳамин Postgres мемонанд.
 
 ### Render
 

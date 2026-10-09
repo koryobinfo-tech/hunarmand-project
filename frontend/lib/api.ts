@@ -1,4 +1,4 @@
-const API = process.env.NEXT_PUBLIC_API_URL || "https://hunarmand-project.onrender.com";
+const API = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 export type Role = "buyer" | "artisan" | "admin";
 
