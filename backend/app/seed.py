@@ -1,6 +1,10 @@
+from datetime import date
+
 from sqlalchemy.orm import Session
 
-from app.models import BlogPost, Category
+from app.auth import hash_password
+from app.config import settings
+from app.models import BlogPost, Category, User, UserRole
 
 IMG = {
     "pottery": "https://images.unsplash.com/photo-1578749556568-bc2c184e1dde?w=800",
@@ -54,4 +58,26 @@ def seed_if_empty(db: Session) -> None:
                 cover_image=IMG["pottery"],
             ),
         ])
+
+    phone = (settings.admin_phone or "").strip()
+    password = (settings.admin_password or "").strip()
+    if phone and password:
+        admin = db.query(User).filter(User.phone == phone).first()
+        if not admin:
+            db.add(
+                User(
+                    role=UserRole.admin,
+                    full_name_or_company=settings.admin_name or "Админ Hunarmand",
+                    phone=phone,
+                    password_hash=hash_password(password),
+                    passport_number=f"ADMIN-{phone[-9:]}",
+                    inn_number=f"ADMININN-{phone[-9:]}",
+                    birth_date=date(1990, 1, 1),
+                    bio="Администратори платформаи Hunarmand",
+                    craft="Идоракунӣ",
+                )
+            )
+        elif admin.role != UserRole.admin:
+            admin.role = UserRole.admin
+
     db.commit()

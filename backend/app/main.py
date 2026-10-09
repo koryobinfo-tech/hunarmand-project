@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.config import settings
-from app.database import Base, SessionLocal, engine
+from app.database import IS_POSTGRES, IS_SQLITE, Base, SessionLocal, engine
 from app.routers import auth as auth_router
 from app.routers import cart as cart_router
 from app.routers import catalog as catalog_router
@@ -17,12 +17,23 @@ Base.metadata.create_all(bind=engine)
 
 
 def ensure_schema() -> None:
-    if not settings.database_url.startswith("sqlite"):
-        return
+    from sqlalchemy import inspect
+
+    inspector = inspect(engine)
+    tables = set(inspector.get_table_names())
     with engine.begin() as conn:
-        columns = [row[1] for row in conn.execute(text("PRAGMA table_info(products)")).fetchall()]
-        if "videos" not in columns:
-            conn.execute(text("ALTER TABLE products ADD COLUMN videos JSON NOT NULL DEFAULT '[]'"))
+        if "products" in tables:
+            columns = {col["name"] for col in inspector.get_columns("products")}
+            if "videos" not in columns:
+                if IS_SQLITE:
+                    conn.execute(text("ALTER TABLE products ADD COLUMN videos JSON NOT NULL DEFAULT '[]'"))
+                else:
+                    conn.execute(text("ALTER TABLE products ADD COLUMN videos JSON DEFAULT '[]'::json"))
+        if "users" in tables and IS_POSTGRES:
+            try:
+                conn.execute(text("ALTER TABLE users ALTER COLUMN avatar_image TYPE TEXT"))
+            except Exception:
+                pass
 
 
 @asynccontextmanager
@@ -56,4 +67,20 @@ app.include_router(extra_router.router)
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "hunarmand"}
+    dialect = engine.dialect.name
+    db_ok = False
+    db = SessionLocal()
+    try:
+        db.execute(text("SELECT 1"))
+        db_ok = True
+    except Exception:
+        db_ok = False
+    finally:
+        db.close()
+    return {
+        "status": "ok" if db_ok else "degraded",
+        "service": "hunarmand",
+        "database": dialect,
+        "persistent": dialect != "sqlite",
+        "db_ok": db_ok,
+    }

@@ -13,7 +13,8 @@ export default function SellerProductsPage() {
 
   async function load() {
     if (!auth) return;
-    const list = await api.get<Product[]>(`/products?seller_id=${auth.user_id}`);
+    const path = auth.role === "admin" ? "/products" : `/products?seller_id=${auth.user_id}`;
+    const list = await api.get<Product[]>(path);
     setProducts(list);
   }
 
@@ -27,7 +28,7 @@ export default function SellerProductsPage() {
   }
 
   return (
-    <DashboardShell role="artisan">
+    <DashboardShell role={auth?.role === "admin" ? "admin" : "artisan"}>
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Илова / Таҳрири маҳсулот</h1>
         <Link href="/dashboard/products/new" className="btn-teal px-4 py-2 text-sm">
@@ -43,6 +44,9 @@ export default function SellerProductsPage() {
               <div className="text-sm text-gray-500">{formatMoney(p.price)} · захира {p.stock}</div>
               {p.videos?.[0] && <div className="mt-1 text-xs font-semibold text-ruby">Видео илова шудааст</div>}
             </div>
+            <Link href={`/dashboard/products/${p.id}`} className="text-sm font-semibold text-teal">
+              Таҳрир
+            </Link>
             <button onClick={() => remove(p.id)} className="text-sm text-red-600">
               Нест кардан
             </button>

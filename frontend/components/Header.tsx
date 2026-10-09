@@ -60,7 +60,7 @@ export function Header() {
   }, []);
 
   useEffect(() => {
-    if (!auth || auth.role === "artisan") {
+    if (!auth || auth.role !== "buyer") {
       setCartCount(0);
       return;
     }
@@ -76,7 +76,7 @@ export function Header() {
     setUserOpen(false);
   }, [pathname]);
 
-  const workspace = auth?.role === "artisan" ? "/dashboard" : "/profile";
+  const workspace = auth?.role === "buyer" ? "/profile" : "/dashboard";
 
   return (
     <header className="sticky top-0 z-50 header-bg text-white">

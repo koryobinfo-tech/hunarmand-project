@@ -21,7 +21,7 @@ export default function SellerOrdersPage() {
     if (auth) api.get<Order[]>("/orders").then(setOrders).catch(() => setOrders([]));
   }, [auth]);
   return (
-    <DashboardShell role="artisan">
+    <DashboardShell role={auth?.role === "admin" ? "admin" : "artisan"}>
       <h1 className="mb-4 text-2xl font-semibold">Фармоишҳои гирифташуда</h1>
       <div className="space-y-3">
         {orders.map((o) => (

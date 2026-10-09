@@ -42,6 +42,8 @@ class CustomOrderStatus(str, enum.Enum):
 
 
 class User(Base):
+    """Профилҳои админ, ҳунарманд ва харидор (ҷадвали users)."""
+
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
@@ -52,7 +54,7 @@ class User(Base):
     passport_number: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     inn_number: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     birth_date: Mapped[date] = mapped_column(Date, nullable=False)
-    avatar_image: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    avatar_image: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     passport_address: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -81,6 +83,8 @@ class Category(Base):
 
 
 class Product(Base):
+    """Маҳсулот ва ҳунарҳо бо сурат, видео ва тавсиф (ҷадвали products)."""
+
     __tablename__ = "products"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)

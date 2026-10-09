@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
     cors_origins: str = "http://localhost:3000"
+    admin_phone: str = ""
+    admin_password: str = ""
+    admin_name: str = "Админ Hunarmand"
 
 
 settings = Settings()

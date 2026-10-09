@@ -90,6 +90,7 @@ class UserOut(BaseModel):
 
 class UserUpdate(BaseModel):
     full_name_or_company: Optional[str] = None
+    phone: Optional[str] = None
     avatar_image: Optional[str] = None
     passport_address: Optional[str] = None
     residential_address: Optional[str] = None
@@ -97,6 +98,18 @@ class UserUpdate(BaseModel):
     tax_registration_number: Optional[str] = None
     bio: Optional[str] = None
     craft: Optional[str] = None
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, value: Optional[str]) -> Optional[str]:
+        if value is None or value == "":
+            return value
+        phone = value.strip()
+        for char in (" ", "-", "(", ")"):
+            phone = phone.replace(char, "")
+        if not phone.startswith("+992") or len(phone) != 13 or not phone[4:].isdigit():
+            raise ValueError("Рақами телефон бояд бо +992 оғоз шавад ва баъд аз он 9 рақам бошад")
+        return phone
 
 
 class CategoryOut(BaseModel):

@@ -87,6 +87,12 @@ def me(user: User = Depends(get_current_user)):
 @router.put("/me", response_model=UserOut)
 def update_me(payload: UserUpdate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     data = payload.model_dump(exclude_unset=True)
+    if data.get("phone"):
+        phone = normalize_phone(data["phone"])
+        exists = db.query(User).filter(User.phone == phone, User.id != user.id).first()
+        if exists:
+            raise HTTPException(status_code=400, detail="Ин рақами телефон аллакай истифода шудааст")
+        data["phone"] = phone
     for key, value in data.items():
         setattr(user, key, value)
     db.commit()

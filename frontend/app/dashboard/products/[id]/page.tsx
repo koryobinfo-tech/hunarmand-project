@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { DashboardShell } from "@/components/DashboardShell";
 import { useAuth } from "@/components/AuthProvider";
-import { Category, api } from "@/lib/api";
+import { Category, Product, api } from "@/lib/api";
 import { formatUsdFromSomoni } from "@/lib/currency";
 
 function fileToDataUrl(file: File) {
@@ -16,38 +16,49 @@ function fileToDataUrl(file: File) {
   });
 }
 
-export default function NewProductPage() {
+export default function EditProductPage() {
+  const { id } = useParams<{ id: string }>();
   const { auth } = useAuth();
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState("");
+  const [saved, setSaved] = useState("");
   const [imageData, setImageData] = useState("");
   const [videoData, setVideoData] = useState("");
   const [form, setForm] = useState({
     category_id: "",
     title: "",
     description: "",
-    price: 100,
-    stock: 1,
+    price: 0,
+    stock: 0,
   });
 
   useEffect(() => {
-    api.get<Category[]>("/categories").then((c) => {
-      setCategories(c);
-      if (c[0]) setForm((f) => ({ ...f, category_id: c[0].id }));
+    api.get<Category[]>("/categories").then(setCategories).catch(() => setCategories([]));
+    api.get<Product>(`/products/${id}`).then((p) => {
+      setForm({
+        category_id: p.category_id,
+        title: p.title,
+        description: p.description,
+        price: p.price,
+        stock: p.stock,
+      });
+      setImageData(p.images?.[0] || "");
+      setVideoData(p.videos?.[0] || "");
     });
-  }, []);
+  }, [id]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setSaved("");
     try {
-      await api.post("/products", {
+      await api.put(`/products/${id}`, {
         ...form,
         images: imageData ? [imageData] : [],
         videos: videoData ? [videoData] : [],
       });
-      router.push("/dashboard/products");
+      setSaved("Маҳсулот ба базаи доимӣ навсозӣ шуд.");
     } catch (err) {
       setError((err as Error).message);
     }
@@ -55,7 +66,7 @@ export default function NewProductPage() {
 
   return (
     <DashboardShell role={auth?.role === "admin" ? "admin" : "artisan"}>
-      <h1 className="mb-5 text-2xl font-semibold">Иловаи маҳсулоти нав</h1>
+      <h1 className="mb-5 text-2xl font-semibold">Таҳрири маҳсулот</h1>
       <form onSubmit={onSubmit} className="grid max-w-3xl gap-4 rounded-3xl bg-white/80 p-5 shadow-xl shadow-teal/10 ring-1 ring-white/70">
         <input className="input" placeholder="Номи маҳсулот" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
         <select className="input" value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
@@ -68,14 +79,13 @@ export default function NewProductPage() {
         <textarea className="input min-h-24" placeholder="Тавсиф" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
         <label className="grid gap-1">
           <span className="text-sm font-semibold text-navy">Нарх (сомонӣ)</span>
-          <input className="input" type="number" min={0} step="0.01" placeholder="Нарх бо сомонӣ" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
+          <input className="input" type="number" min={0} step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
           <span className="text-sm font-semibold text-teal">≈ {formatUsdFromSomoni(form.price)} доллар</span>
         </label>
         <input className="input" type="number" placeholder="Захира" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />
         <div className="grid gap-4 md:grid-cols-2">
           <label className="rounded-3xl border border-dashed border-teal/40 bg-cream/70 p-4">
-            <span className="block text-sm font-semibold text-navy">Боргирии расми маҳсулот</span>
-            <span className="mb-3 block text-xs text-gray-500">PNG, JPG ё WebP-ро интихоб кунед.</span>
+            <span className="block text-sm font-semibold text-navy">Расми маҳсулот</span>
             <input
               className="block w-full text-sm"
               type="file"
@@ -85,11 +95,10 @@ export default function NewProductPage() {
                 if (file) setImageData(await fileToDataUrl(file));
               }}
             />
-            {imageData && <img src={imageData} alt="Пешнамоиши расм" className="mt-3 h-40 w-full rounded-2xl object-cover" />}
+            {imageData && <img src={imageData} alt="" className="mt-3 h-40 w-full rounded-2xl object-cover" />}
           </label>
           <label className="rounded-3xl border border-dashed border-ruby/40 bg-white p-4">
-            <span className="block text-sm font-semibold text-navy">Боргирии видеои маҳсулот</span>
-            <span className="mb-3 block text-xs text-gray-500">Видео барои намоиши кори ҳунармандӣ.</span>
+            <span className="block text-sm font-semibold text-navy">Видеои маҳсулот</span>
             <input
               className="block w-full text-sm"
               type="file"
@@ -103,7 +112,11 @@ export default function NewProductPage() {
           </label>
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <button className="btn-teal py-3">Нигоҳ доштан</button>
+        {saved && <p className="text-sm text-teal">{saved}</p>}
+        <button className="btn-teal py-3">Нигоҳ доштан ба база</button>
+        <button type="button" className="text-sm text-gray-500" onClick={() => router.push("/dashboard/products")}>
+          Бозгашт
+        </button>
       </form>
     </DashboardShell>
   );

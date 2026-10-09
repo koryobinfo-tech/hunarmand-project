@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hunarmand-postgres
+    environment:
+      POSTGRES_DB: hunarmand
+      POSTGRES_USER: hunarmand
+      POSTGRES_PASSWORD: hunarmand
+    ports:
+      - "5432:5432"
+    volumes:
+      - hunarmand_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hunarmand -d hunarmand"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  hunarmand_pgdata:

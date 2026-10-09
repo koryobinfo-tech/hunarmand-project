@@ -6,12 +6,22 @@ import { Header } from "./Header";
 
 const artisanLinks = [
   { href: "/dashboard", label: "Коргоҳи ман" },
+  { href: "/dashboard/profile", label: "Редактировать профил" },
   { href: "/dashboard/products", label: "Маҳсулотҳо" },
   { href: "/dashboard/products/new", label: "Иловаи маҳсулот" },
   { href: "/custom-orders", label: "Фармоишҳои махсус" },
   { href: "/dashboard/orders", label: "Фармоишҳо" },
   { href: "/ai", label: "Ёрирасони AI" },
   { href: "/map", label: "Харита" },
+];
+
+const adminLinks = [
+  { href: "/dashboard", label: "Панели админ" },
+  { href: "/dashboard/profile", label: "Редактировать профил" },
+  { href: "/dashboard/products", label: "Маҳсулотҳо" },
+  { href: "/dashboard/products/new", label: "Иловаи маҳсулот" },
+  { href: "/dashboard/orders", label: "Фармоишҳо" },
+  { href: "/custom-orders", label: "Фармоишҳои махсус" },
 ];
 
 const buyerLinks = [
@@ -28,16 +38,18 @@ export function DashboardShell({
   role,
 }: {
   children: React.ReactNode;
-  role: "artisan" | "buyer";
+  role: "artisan" | "buyer" | "admin";
 }) {
   const pathname = usePathname();
-  const links = role === "artisan" ? artisanLinks : buyerLinks;
+  const links = role === "admin" ? adminLinks : role === "artisan" ? artisanLinks : buyerLinks;
   return (
     <div className="page-bg">
       <Header />
       <div className="mx-auto grid max-w-6xl gap-0 px-3 py-6 md:grid-cols-[220px_1fr]">
         <aside className="sidebar mb-4 rounded-2xl p-4 text-white md:mb-0 md:rounded-l-2xl md:rounded-r-none">
-          <div className="mb-4 text-sm font-semibold opacity-80">{role === "artisan" ? "Панели ҳунарманд" : "Панели харидор"}</div>
+          <div className="mb-4 text-sm font-semibold opacity-80">
+            {role === "admin" ? "Панели админ" : role === "artisan" ? "Панели ҳунарманд" : "Панели харидор"}
+          </div>
           <nav className="space-y-1 text-sm">
             {links.map((l) => (
               <Link

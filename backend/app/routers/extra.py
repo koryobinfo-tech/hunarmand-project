@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_current_user
 from app.config import settings
-from app.database import get_db
+from app.database import IS_POSTGRES, engine, get_db
 from app.models import BlogPost, CustomOrder, OrderItem, Product, User, UserRole
 from app.schemas import ArtisanMapOut, AiTopicOut, BlogPostOut, ChatIn, ChatOut, RelatedProduct
 
@@ -125,17 +125,38 @@ def blog_detail(post_id: str, db: Session = Depends(get_db)):
     return post
 
 
+@router.get("/storage")
+def storage_status(db: Session = Depends(get_db)):
+    dialect = engine.dialect.name
+    users = db.query(User).count()
+    products = db.query(Product).count()
+    return {
+        "database": dialect,
+        "persistent": dialect != "sqlite",
+        "tables": {
+            "users": "профилҳои админ, ҳунарманд ва харидор",
+            "products": "маҳсулот ва ҳунарҳо бо сурат/видео ва тавсиф",
+            "categories": "категорияҳои ҳунар",
+            "orders": "фармоишҳо",
+            "custom_orders": "фармоишҳои махсус",
+        },
+        "counts": {"users": users, "products": products},
+        "postgres": IS_POSTGRES,
+    }
+
+
 @router.get("/dashboard/stats")
 def dashboard_stats(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-
-    products = db.query(Product).filter(Product.seller_id == user.id).all()
-    custom = db.query(CustomOrder).filter(CustomOrder.seller_id == user.id).all()
-    sales = (
-        db.query(OrderItem)
-        .join(Product, OrderItem.product_id == Product.id)
-        .filter(Product.seller_id == user.id)
-        .all()
-    )
+    product_query = db.query(Product)
+    custom_query = db.query(CustomOrder)
+    sales_query = db.query(OrderItem).join(Product, OrderItem.product_id == Product.id)
+    if user.role != UserRole.admin:
+        product_query = product_query.filter(Product.seller_id == user.id)
+        custom_query = custom_query.filter(CustomOrder.seller_id == user.id)
+        sales_query = sales_query.filter(Product.seller_id == user.id)
+    products = product_query.all()
+    custom = custom_query.all()
+    sales = sales_query.all()
     revenue = sum(i.unit_price * i.quantity for i in sales)
     return {
         "products": len(products),
@@ -143,4 +164,24 @@ def dashboard_stats(db: Session = Depends(get_db), user: User = Depends(get_curr
         "orders": len(sales),
         "revenue": revenue,
         "low_stock": sum(1 for p in products if p.stock < 5),
+        "users": db.query(User).count() if user.role == UserRole.admin else 0,
     }
+
+
+@router.get("/admin/users")
+def admin_users(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    if user.role != UserRole.admin:
+        raise HTTPException(status_code=403, detail="Дастрасӣ манъ аст")
+    rows = db.query(User).order_by(User.created_at.desc()).all()
+    return [
+        {
+            "id": u.id,
+            "role": u.role.value,
+            "full_name_or_company": u.full_name_or_company,
+            "phone": u.phone,
+            "craft": u.craft,
+            "avatar_image": u.avatar_image,
+            "bio": u.bio,
+        }
+        for u in rows
+    ]
