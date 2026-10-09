@@ -41,11 +41,12 @@ CRUD: `POST/GET/PUT/DELETE /products`, `GET/PUT /auth/me`, `GET /admin/users`.
 
 ### Render
 
-Файли `render.yaml` базаи **hunarmand-db** (PostgreSQL) ва `DATABASE_URL`-ро худкор пайваст мекунад. Агар сервис қаблан бе база сохта шуда бошад:
+Файли `render.yaml` базаи **hunarmand-db** (PostgreSQL) ва `DATABASE_URL`-ро худкор пайваст мекунад. Агар сервис қаблан бе база сохта шуда бошад, маҳсулот бо ҳар redeploy нест мешавад. Инро як бор иҷро кунед:
 
 1. Render → New → PostgreSQL (`hunarmand-db`)
-2. Ба Web Service-и API дар Environment `DATABASE_URL`-ро аз Internal Database URL гузоред
-3. Redeploy кунед. `/health` бояд `"persistent": true` ва `"database": "postgresql"` нишон диҳад
+2. Web Service-и `hunarmand-project` → Environment → `DATABASE_URL` = Internal Database URL
+3. Manual Deploy. `/health` бояд `"persistent": true` ва `"database": "postgresql"` бошад
+4. Баъд маҳсулоти нав дар `/` ва `/catalog` боқӣ мемонад
 
 Дар Render SQLite рад карда мешавад, чун диск муваққатӣ аст.
 

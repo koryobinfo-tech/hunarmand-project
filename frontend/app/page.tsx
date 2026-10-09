@@ -98,6 +98,11 @@ export default function HomePage() {
               <ProductCard key={p.id} product={p} />
             ))}
           </div>
+          {featured.length === 0 && (
+            <p className="rounded-2xl bg-white/70 p-6 text-sm text-gray-600">
+              Ҳоло маҳсулот дар база нест. Пас аз воридшавӣ ҳамчун ҳунарманд ё админ, маҳсулотро илова кунед — он дар ҳамин саҳифа мемонад.
+            </p>
+          )}
         </section>
 
         <section className="mt-10">

@@ -68,7 +68,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (t) headers.set("Authorization", `Bearer ${t}`);
   let res: Response;
   try {
-    res = await fetch(`${API}${path}`, { ...init, headers });
+    res = await fetch(`${API}${path}`, { cache: "no-store", ...init, headers });
   } catch {
     throw new Error("Пайвастшавӣ ба сервер қатъ аст. Backend-и Render-ро санҷед.");
   }

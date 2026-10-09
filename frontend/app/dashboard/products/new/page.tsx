@@ -6,15 +6,7 @@ import { DashboardShell } from "@/components/DashboardShell";
 import { useAuth } from "@/components/AuthProvider";
 import { Category, api } from "@/lib/api";
 import { formatUsdFromSomoni } from "@/lib/currency";
-
-function fileToDataUrl(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("Файл хонда нашуд"));
-    reader.readAsDataURL(file);
-  });
-}
+import { fileToCompressedDataUrl } from "@/lib/media";
 
 export default function NewProductPage() {
   const { auth } = useAuth();
@@ -82,7 +74,7 @@ export default function NewProductPage() {
               accept="image/*"
               onChange={async (e) => {
                 const file = e.target.files?.[0];
-                if (file) setImageData(await fileToDataUrl(file));
+                if (file) setImageData(await fileToCompressedDataUrl(file));
               }}
             />
             {imageData && <img src={imageData} alt="Пешнамоиши расм" className="mt-3 h-40 w-full rounded-2xl object-cover" />}
@@ -96,7 +88,7 @@ export default function NewProductPage() {
               accept="video/*"
               onChange={async (e) => {
                 const file = e.target.files?.[0];
-                if (file) setVideoData(await fileToDataUrl(file));
+                if (file) setVideoData(await fileToCompressedDataUrl(file));
               }}
             />
             {videoData && <video src={videoData} controls className="mt-3 h-40 w-full rounded-2xl bg-black object-cover" />}

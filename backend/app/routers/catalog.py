@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session, joinedload
 
 from app.auth import get_current_user, require_roles
@@ -34,6 +34,7 @@ def list_categories(db: Session = Depends(get_db)):
 
 @router.get("/products", response_model=list[ProductOut])
 def list_products(
+    response: Response,
     db: Session = Depends(get_db),
     category: str | None = None,
     q: str | None = None,
@@ -41,6 +42,7 @@ def list_products(
     min_price: float | None = Query(default=None),
     max_price: float | None = Query(default=None),
 ):
+    response.headers["Cache-Control"] = "no-store"
     query = db.query(Product).options(joinedload(Product.seller), joinedload(Product.category))
     if category:
         query = query.join(Category).filter((Category.slug == category) | (Category.id == category))

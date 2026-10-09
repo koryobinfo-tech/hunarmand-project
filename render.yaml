@@ -6,7 +6,7 @@ databases:
 
 services:
   - type: web
-    name: hunarmand-api
+    name: hunarmand-project
     runtime: python
     rootDir: backend
     plan: free
