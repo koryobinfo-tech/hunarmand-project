@@ -5,11 +5,10 @@ import { AdminShell } from "@/components/AdminShell";
 import { useAuth } from "@/components/AuthProvider";
 import { api } from "@/lib/api";
 import { fileToCompressedDataUrl } from "@/lib/media";
-import { formatTajikPhoneInput } from "@/lib/phone";
 
 export default function AdminProfilePage() {
   const { profile, refresh } = useAuth();
-  const [form, setForm] = useState({ full_name_or_company: "", phone: "+992", bio: "", craft: "", avatar_image: "" });
+  const [form, setForm] = useState({ full_name_or_company: "", phone: "ADMIN", bio: "", craft: "", avatar_image: "" });
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
 
@@ -17,7 +16,7 @@ export default function AdminProfilePage() {
     if (!profile) return;
     setForm({
       full_name_or_company: profile.full_name_or_company || "",
-      phone: profile.phone || "+992",
+      phone: "ADMIN",
       bio: profile.bio || "",
       craft: profile.craft || "",
       avatar_image: profile.avatar_image || "",
@@ -43,7 +42,7 @@ export default function AdminProfilePage() {
         {form.avatar_image && <img src={form.avatar_image} alt="" className="h-24 w-24 rounded-full object-cover" />}
         <input type="file" accept="image/*" onChange={async (e) => { const f = e.target.files?.[0]; if (f) setForm({ ...form, avatar_image: await fileToCompressedDataUrl(f) }); }} />
         <input className="input" placeholder="Ном" value={form.full_name_or_company} onChange={(e) => setForm({ ...form, full_name_or_company: e.target.value })} />
-        <input className="input" value={form.phone} onChange={(e) => setForm({ ...form, phone: formatTajikPhoneInput(e.target.value) })} />
+        <input className="input bg-gray-100" value="ADMIN" disabled />
         <input className="input" placeholder="Вазифа" value={form.craft} onChange={(e) => setForm({ ...form, craft: e.target.value })} />
         <textarea className="input min-h-24" placeholder="Тавсиф" value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} />
         {error && <p className="text-red-600">{error}</p>}

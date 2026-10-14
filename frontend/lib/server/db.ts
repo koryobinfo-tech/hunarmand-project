@@ -177,26 +177,46 @@ export async function initSchema() {
       )`;
   }
 
-  const adminPhone = (process.env.ADMIN_PHONE || "+992900000007").replace(/[ \-()]/g, "");
-  const adminPassword = process.env.ADMIN_PASSWORD || "Admin123";
+  const adminLogin = "ADMIN";
+  const adminPassword = "123456";
   const adminName = process.env.ADMIN_NAME || "Админ Hunarmand";
-  const existingAdmin = await db`SELECT id FROM users WHERE role = 'admin' LIMIT 1`;
-  if (!existingAdmin[0] && adminPhone && adminPassword) {
-    try {
-      const id = crypto.randomUUID();
+  const existingAdmin = await db`
+    SELECT id, phone, passport_number FROM users
+    WHERE role = 'admin' OR UPPER(phone) = ${adminLogin}
+    LIMIT 1
+  `;
+  const needsAdminCreds =
+    !existingAdmin[0] ||
+    String(existingAdmin[0].phone) !== adminLogin ||
+    String(existingAdmin[0].passport_number) !== "ADMIN-LOGIN";
+  if (needsAdminCreds) {
+    const adminHash = await bcrypt.hash(adminPassword.slice(0, 72), 10);
+    if (!existingAdmin[0]) {
+      try {
+        const id = crypto.randomUUID();
+        await db`
+          INSERT INTO users (id, role, full_name_or_company, phone, password_hash, passport_number, inn_number, birth_date, bio, craft)
+          VALUES (
+            ${id}, 'admin', ${adminName}, ${adminLogin},
+            ${adminHash},
+            'ADMIN-LOGIN',
+            'ADMININN-01',
+            '1990-01-01',
+            'Администратори платформаи Hunarmand',
+            'Идоракунӣ'
+          )`;
+      } catch {
+        /* already exists */
+      }
+    } else {
       await db`
-        INSERT INTO users (id, role, full_name_or_company, phone, password_hash, passport_number, inn_number, birth_date, bio, craft)
-        VALUES (
-          ${id}, 'admin', ${adminName}, ${adminPhone},
-          ${await bcrypt.hash(adminPassword.slice(0, 72), 10)},
-          ${"ADMIN-" + adminPhone.slice(-9)},
-          ${"ADMININN-" + adminPhone.slice(-9)},
-          '1990-01-01',
-          'Администратори платформаи Hunarmand',
-          'Идоракунӣ'
-        )`;
-    } catch {
-      /* already exists */
+        UPDATE users SET
+          role = 'admin',
+          phone = ${adminLogin},
+          password_hash = ${adminHash},
+          passport_number = 'ADMIN-LOGIN'
+        WHERE id = ${existingAdmin[0].id as string}
+      `;
     }
   }
 }

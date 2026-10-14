@@ -36,7 +36,8 @@ function err(detail: string, status = 400) {
 }
 
 function normalizePhone(phone: string) {
-  return phone.replace(/[ \-()]/g, "").trim();
+  const value = phone.replace(/[ \-()]/g, "").trim();
+  return value.toUpperCase() === "ADMIN" ? "ADMIN" : value;
 }
 
 function isPhone(phone: string) {
@@ -238,6 +239,7 @@ export async function handleApi(req: Request, parts: string[]) {
       const password = String(body.password || "");
       const role = String(body.role || "buyer");
       if (role === "admin") return err("Бақайдгирии админ манъ аст");
+      if (phone === "ADMIN") return err("Ин логин танҳо барои соҳиби сомона аст");
       if (!isPhone(phone)) return err("Рақами телефон бояд бо +992 оғоз шавад ва баъд аз он 9 рақам бошад");
       if (!/[A-Za-zА-Яа-яЁёӢӣӮӯҲҳҶҷҚқҒғ]/.test(password) || !/\d/.test(password)) {
         return err("Рамз бояд ҳам ҳарф ва ҳам рақам дошта бошад");
@@ -265,7 +267,7 @@ export async function handleApi(req: Request, parts: string[]) {
     }
 
     if (path === "/auth/login" && req.method === "POST") {
-      const phone = normalizePhone(String(body.phone || ""));
+      const phone = normalizePhone(String(body.phone || body.login || ""));
       const rows = await db`SELECT * FROM users WHERE phone = ${phone} LIMIT 1`;
       const user = rows[0] as User | undefined;
       if (!user || !(await bcrypt.compare(String(body.password || ""), user.password_hash || ""))) {
@@ -283,7 +285,7 @@ export async function handleApi(req: Request, parts: string[]) {
     if (path === "/auth/me" && req.method === "PUT") {
       const user = await authUser(req);
       if (!user) return err("Token нодуруст аст", 401);
-      const phone = body.phone ? normalizePhone(String(body.phone)) : user.phone;
+      const phone = user.role === "admin" ? "ADMIN" : body.phone ? normalizePhone(String(body.phone)) : user.phone;
       if (phone !== user.phone) {
         const clash = await db`SELECT id FROM users WHERE phone = ${phone} AND id <> ${user.id} LIMIT 1`;
         if (clash[0]) return err("Ин рақами телефон аллакай истифода шудааст");
@@ -522,10 +524,12 @@ export async function handleApi(req: Request, parts: string[]) {
       const row = (await db`SELECT * FROM users WHERE id = ${id} LIMIT 1`)[0] as User | undefined;
       if (!row) return err("Корбар ёфт нашуд", 404);
       const role = String(body.role || row.role);
+      if (row.role === "admin" && role !== "admin") return err("Нақши админи асосӣ иваз намешавад");
+      const phone = row.role === "admin" ? "ADMIN" : body.phone ? normalizePhone(String(body.phone)) : row.phone;
       await db`
         UPDATE users SET
           full_name_or_company = ${String(body.full_name_or_company ?? row.full_name_or_company)},
-          phone = ${body.phone ? normalizePhone(String(body.phone)) : row.phone},
+          phone = ${phone},
           role = ${role},
           craft = ${body.craft !== undefined ? String(body.craft) : row.craft || null},
           bio = ${body.bio !== undefined ? String(body.bio) : row.bio || null},
