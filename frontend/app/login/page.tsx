@@ -29,7 +29,7 @@ function LoginForm() {
         router.push(next);
         return;
       }
-      router.push(data.role === "buyer" ? "/profile" : "/dashboard");
+      router.push(data.role === "admin" ? "/admin" : data.role === "buyer" ? "/profile" : "/dashboard");
     } catch (err) {
       setError((err as Error).message);
     }

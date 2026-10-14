@@ -76,7 +76,7 @@ export function Header() {
     setUserOpen(false);
   }, [pathname]);
 
-  const workspace = auth?.role === "buyer" ? "/profile" : "/dashboard";
+  const workspace = auth?.role === "admin" ? "/admin" : auth?.role === "buyer" ? "/profile" : "/dashboard";
 
   return (
     <header className="sticky top-0 z-50 header-bg text-white">
@@ -168,7 +168,7 @@ export function Header() {
             {userOpen && (
               <div className="absolute right-0 mt-2 w-52 rounded-xl bg-white p-2 text-ink shadow-2xl">
                 <Link href={workspace} className="block rounded-lg px-3 py-2 text-sm hover:bg-cream">
-                  {auth.role === "artisan" ? "Коргоҳи ман" : "Профили ман"}
+                  {auth.role === "admin" ? "Панели админ" : auth.role === "artisan" ? "Коргоҳи ман" : "Профили ман"}
                 </Link>
                 <Link href="/custom-orders" className="block rounded-lg px-3 py-2 text-sm hover:bg-cream">
                   Фармоишҳои махсус

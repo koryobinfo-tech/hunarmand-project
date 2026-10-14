@@ -57,6 +57,13 @@ async function tokenOf(user: User) {
   };
 }
 
+async function requireAdmin(req: Request) {
+  const user = await authUser(req);
+  if (!user) return { user: null, error: err("Token нодуруст аст", 401) };
+  if (user.role !== "admin") return { user: null, error: err("Дастрасӣ танҳо барои админ", 403) };
+  return { user, error: null };
+}
+
 async function authUser(req: Request): Promise<User | null> {
   const header = req.headers.get("authorization") || "";
   const raw = header.startsWith("Bearer ") ? header.slice(7) : "";
@@ -504,9 +511,118 @@ export async function handleApi(req: Request, parts: string[]) {
       });
     }
     if (path === "/admin/users" && req.method === "GET") {
-      const user = await authUser(req);
-      if (!user || user.role !== "admin") return err("Дастрасӣ манъ аст", 403);
-      return json(await db`SELECT id, role, full_name_or_company, phone, craft, avatar_image, bio FROM users ORDER BY created_at DESC`);
+      const { user, error } = await requireAdmin(req);
+      if (!user) return error;
+      return json(await db`SELECT id, role, full_name_or_company, phone, craft, avatar_image, bio, workshop_address, created_at FROM users ORDER BY created_at DESC`);
+    }
+    if (path.startsWith("/admin/users/") && req.method === "PUT") {
+      const { user, error } = await requireAdmin(req);
+      if (!user) return error;
+      const id = parts[2];
+      const row = (await db`SELECT * FROM users WHERE id = ${id} LIMIT 1`)[0] as User | undefined;
+      if (!row) return err("Корбар ёфт нашуд", 404);
+      const role = String(body.role || row.role);
+      await db`
+        UPDATE users SET
+          full_name_or_company = ${String(body.full_name_or_company ?? row.full_name_or_company)},
+          phone = ${body.phone ? normalizePhone(String(body.phone)) : row.phone},
+          role = ${role},
+          craft = ${body.craft !== undefined ? String(body.craft) : row.craft || null},
+          bio = ${body.bio !== undefined ? String(body.bio) : row.bio || null},
+          workshop_address = ${body.workshop_address !== undefined ? String(body.workshop_address) : row.workshop_address || null}
+        WHERE id = ${id}`;
+      return json((await db`SELECT id, role, full_name_or_company, phone, craft, bio, workshop_address FROM users WHERE id = ${id}`)[0]);
+    }
+    if (path.startsWith("/admin/users/") && req.method === "DELETE") {
+      const { user, error } = await requireAdmin(req);
+      if (!user) return error;
+      const id = parts[2];
+      if (id === user.id) return err("Шумо наметавонед ҳисоби худатонро нест кунед");
+      await db`DELETE FROM cart_items WHERE buyer_id = ${id}`;
+      await db`DELETE FROM custom_order_messages WHERE sender_id = ${id}`;
+      await db`DELETE FROM custom_orders WHERE buyer_id = ${id} OR seller_id = ${id}`;
+      await db`DELETE FROM products WHERE seller_id = ${id}`;
+      await db`DELETE FROM users WHERE id = ${id}`;
+      return json({ ok: true });
+    }
+
+    if (path === "/categories" && req.method === "POST") {
+      const { user, error } = await requireAdmin(req);
+      if (!user) return error;
+      const slug = String(body.slug || String(body.name || "").toLowerCase().replace(/\s+/g, "-"));
+      const id = crypto.randomUUID();
+      await db`INSERT INTO categories (id, name, slug, description, icon_image) VALUES (${id}, ${String(body.name || "")}, ${slug}, ${String(body.description || "")}, ${(body.icon_image as string) || null})`;
+      return json((await db`SELECT * FROM categories WHERE id = ${id}`)[0]);
+    }
+    if (path.startsWith("/categories/") && req.method === "PUT") {
+      const { user, error } = await requireAdmin(req);
+      if (!user) return error;
+      const id = parts[1];
+      await db`UPDATE categories SET name = ${String(body.name || "")}, slug = ${String(body.slug || "")}, description = ${String(body.description || "")}, icon_image = ${(body.icon_image as string) || null} WHERE id = ${id}`;
+      return json((await db`SELECT * FROM categories WHERE id = ${id}`)[0]);
+    }
+    if (path.startsWith("/categories/") && req.method === "DELETE") {
+      const { user, error } = await requireAdmin(req);
+      if (!user) return error;
+      await db`DELETE FROM categories WHERE id = ${parts[1]}`;
+      return json({ ok: true });
+    }
+
+    if (path === "/blog" && req.method === "POST") {
+      const { user, error } = await requireAdmin(req);
+      if (!user) return error;
+      const id = crypto.randomUUID();
+      await db`INSERT INTO blog_posts (id, title, excerpt, body, cover_image) VALUES (${id}, ${String(body.title || "")}, ${String(body.excerpt || "")}, ${String(body.body || "")}, ${(body.cover_image as string) || null})`;
+      return json((await db`SELECT * FROM blog_posts WHERE id = ${id}`)[0]);
+    }
+    if (path.startsWith("/blog/") && req.method === "PUT") {
+      const { user, error } = await requireAdmin(req);
+      if (!user) return error;
+      const id = parts[1];
+      await db`UPDATE blog_posts SET title = ${String(body.title || "")}, excerpt = ${String(body.excerpt || "")}, body = ${String(body.body || "")}, cover_image = ${(body.cover_image as string) || null} WHERE id = ${id}`;
+      return json((await db`SELECT * FROM blog_posts WHERE id = ${id}`)[0]);
+    }
+    if (path.startsWith("/blog/") && req.method === "DELETE") {
+      const { user, error } = await requireAdmin(req);
+      if (!user) return error;
+      await db`DELETE FROM blog_posts WHERE id = ${parts[1]}`;
+      return json({ ok: true });
+    }
+
+    if (path.startsWith("/pages/") && req.method === "GET") {
+      const row = (await db`SELECT * FROM site_pages WHERE slug = ${parts[1]} LIMIT 1`)[0];
+      if (!row) return err("Саҳифа ёфт нашуд", 404);
+      return json(row);
+    }
+    if (path.startsWith("/pages/") && req.method === "PUT") {
+      const { user, error } = await requireAdmin(req);
+      if (!user) return error;
+      await db`
+        INSERT INTO site_pages (slug, title, body, extra)
+        VALUES (${parts[1]}, ${String(body.title || "")}, ${String(body.body || "")}, ${db.json(body.extra || {})})
+        ON CONFLICT (slug) DO UPDATE SET title = EXCLUDED.title, body = EXCLUDED.body, extra = EXCLUDED.extra`;
+      return json((await db`SELECT * FROM site_pages WHERE slug = ${parts[1]}`)[0]);
+    }
+
+    if (path.startsWith("/orders/") && req.method === "PUT") {
+      const { user, error } = await requireAdmin(req);
+      if (!user) return error;
+      await db`UPDATE orders SET status = ${String(body.status || "pending")} WHERE id = ${parts[1]}`;
+      return json({ ok: true });
+    }
+    if (path.startsWith("/orders/") && req.method === "DELETE") {
+      const { user, error } = await requireAdmin(req);
+      if (!user) return error;
+      await db`DELETE FROM order_items WHERE order_id = ${parts[1]}`;
+      await db`DELETE FROM orders WHERE id = ${parts[1]}`;
+      return json({ ok: true });
+    }
+    if (path.match(/^\/custom-orders\/[^/]+$/) && req.method === "DELETE") {
+      const { user, error } = await requireAdmin(req);
+      if (!user) return error;
+      await db`DELETE FROM custom_order_messages WHERE custom_order_id = ${parts[1]}`;
+      await db`DELETE FROM custom_orders WHERE id = ${parts[1]}`;
+      return json({ ok: true });
     }
 
     return err("Роут ёфт нашуд", 404);

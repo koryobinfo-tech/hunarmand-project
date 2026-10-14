@@ -20,6 +20,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (ready && !auth) router.push("/login");
     if (auth?.role === "buyer") router.push("/profile");
+    if (auth?.role === "admin") router.push("/admin");
   }, [auth, ready, router]);
 
   useEffect(() => {

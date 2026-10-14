@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import postgres from "postgres";
 
 const url =
@@ -129,6 +130,13 @@ export async function initSchema() {
       cover_image TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`;
+  await db`
+    CREATE TABLE IF NOT EXISTS site_pages (
+      slug TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      extra JSONB NOT NULL DEFAULT '{}'::jsonb
+    )`;
 
   const cats = await db`SELECT id FROM categories LIMIT 1`;
   if (cats.length === 0) {
@@ -155,5 +163,40 @@ export async function initSchema() {
       (${crypto.randomUUID()}, 'Сирри нақшҳои чакан', 'Ҳар гул дар чакан маънои худро дорад.', 'Чакан либос ва рӯйпӯши дастдӯз аст.', 'https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=800'),
       (${crypto.randomUUID()}, 'Кулолгарии Истаравшан', 'Гил, оташ ва дасти устод.', 'Истаравшан маркази қадимии кулолгарӣ аст.', 'https://images.unsplash.com/photo-1578749556568-bc2c184e1dde?w=800')
     `;
+  }
+
+  const about = await db`SELECT slug FROM site_pages WHERE slug = 'about' LIMIT 1`;
+  if (!about[0]) {
+    await db`
+      INSERT INTO site_pages (slug, title, body, extra)
+      VALUES (
+        'about',
+        'Миссия ва дастаи мо',
+        'Мо кӯшиш мекунем, ки ҳунармандони тоҷикро бо харидорон ва сайёҳон мустақиман пайваст кунем. Hunarmand хариди мустақим, фармоиши инфиродӣ, харитаи устохонаҳо ва ёрирасони фарҳангиро муттаҳид мекунад.',
+        ${db.json({ team: [{ name: "Мадина Раҳимова", role: "Асосгузор" }] })}
+      )`;
+  }
+
+  const adminPhone = (process.env.ADMIN_PHONE || "+992900000007").replace(/[ \-()]/g, "");
+  const adminPassword = process.env.ADMIN_PASSWORD || "Admin123";
+  const adminName = process.env.ADMIN_NAME || "Админ Hunarmand";
+  const existingAdmin = await db`SELECT id FROM users WHERE role = 'admin' LIMIT 1`;
+  if (!existingAdmin[0] && adminPhone && adminPassword) {
+    try {
+      const id = crypto.randomUUID();
+      await db`
+        INSERT INTO users (id, role, full_name_or_company, phone, password_hash, passport_number, inn_number, birth_date, bio, craft)
+        VALUES (
+          ${id}, 'admin', ${adminName}, ${adminPhone},
+          ${await bcrypt.hash(adminPassword.slice(0, 72), 10)},
+          ${"ADMIN-" + adminPhone.slice(-9)},
+          ${"ADMININN-" + adminPhone.slice(-9)},
+          '1990-01-01',
+          'Администратори платформаи Hunarmand',
+          'Идоракунӣ'
+        )`;
+    } catch {
+      /* already exists */
+    }
   }
 }
