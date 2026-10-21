@@ -55,6 +55,12 @@ function LoginForm() {
             </Link>
           </p>
           <p className="mt-3 text-xs text-gray-500">Ҳар ҳисоб мувофиқи нақши бақайдгирифташуда ба қисми харидор ё фурӯшанда ворид мешавад.</p>
+          <p className="mt-4 text-center text-sm">
+            Соҳиби сомона?{" "}
+            <Link href="/admin/login" className="font-semibold text-ruby">
+              Даромад ба панели админ
+            </Link>
+          </p>
         </form>
       </main>
     </div>

@@ -82,7 +82,12 @@ export function Header() {
     <header className="sticky top-0 z-50 header-bg text-white">
       <div className="border-b border-white/10">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-1.5 text-[11px] tracking-wide text-white/70">
-          <span>Маркетплейси ҳунарҳои мардумии Тоҷикистон</span>
+          <div className="flex items-center gap-4">
+            <span>Маркетплейси ҳунарҳои мардумии Тоҷикистон</span>
+            <Link href="/admin/login" className="text-amber hover:text-white">
+              Панели админ
+            </Link>
+          </div>
           <span className="hidden sm:inline">Душанбе · Хуҷанд · Кӯлоб · Хоруғ · Истаравшан</span>
         </div>
       </div>
@@ -276,9 +281,11 @@ export function Footer() {
         </div>
         <div className="text-sm text-white/70">
           <div className="mb-2 font-semibold text-white">Дастгирӣ</div>
-          <p>Ворид: +992900000001</p>
-          <p>Ҳунарманд: +992900000002</p>
-          <p className="mt-2">Рамз: password123</p>
+          <Link href="/admin/login" className="block py-1 hover:text-white">
+            Панели админ
+          </Link>
+          <p className="mt-2 text-xs">Логин: ADMIN</p>
+          <p className="text-xs">Парол: 123456</p>
         </div>
       </div>
       <div className="border-t border-white/10 py-4 text-center text-xs text-white/50">© {new Date().getFullYear()} Hunarmand · ҳунарҳои мардумӣ</div>

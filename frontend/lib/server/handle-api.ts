@@ -118,12 +118,21 @@ async function productOut(row: Record<string, unknown>) {
 
 export async function handleApi(req: Request, parts: string[]) {
   if (req.method === "OPTIONS") return new Response(null, { status: 204 });
+  const path = "/" + parts.filter(Boolean).join("/");
+  if ((path === "/health" || path === "/") && req.method === "GET") {
+    return json({
+      status: "ok",
+      service: "hunarmand-vercel",
+      database: hasDatabase() ? "postgresql" : "missing",
+      persistent: hasDatabase(),
+      db_ok: hasDatabase(),
+    });
+  }
   if (!hasDatabase()) {
     return err("Базаи Vercel Postgres пайваст нест. Дар Vercel: Storage → Create Database → Postgres, баъд Redeploy.", 503);
   }
   await initSchema();
   const db = getSql();
-  const path = "/" + parts.filter(Boolean).join("/");
   const url = new URL(req.url);
   let body: Record<string, unknown> = {};
   if (req.method !== "GET" && req.method !== "DELETE") {

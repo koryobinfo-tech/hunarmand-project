@@ -1,4 +1,10 @@
-const API = process.env.NEXT_PUBLIC_API_URL || "/api";
+function apiBase() {
+  const env = (process.env.NEXT_PUBLIC_API_URL || "/api").replace(/\/$/, "");
+  if (!env || env.includes("onrender.com") || env.includes("localhost:8000")) return "/api";
+  return env;
+}
+
+const API = apiBase();
 
 export type Role = "buyer" | "artisan" | "admin";
 
@@ -70,7 +76,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   try {
     res = await fetch(`${API}${path}`, { cache: "no-store", ...init, headers });
   } catch {
-    throw new Error("Пайвастшавӣ ба сервер қатъ аст. Backend-и Render-ро санҷед.");
+    throw new Error("Пайвастшавӣ ба сервер қатъ аст. Саҳифаро навсозӣ кунед ё баъдтар кӯшиш кунед.");
   }
   if (!res.ok) {
     let detail = "Хатогии шабака";

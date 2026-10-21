@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AiChat } from "./AiChat";
 
 export function AiWidget() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  if (pathname?.startsWith("/admin")) return null;
 
   return (
     <>
