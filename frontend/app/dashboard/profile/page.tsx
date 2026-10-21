@@ -90,7 +90,9 @@ export default function EditProfilePage() {
               accept="image/*"
               onChange={async (e) => {
                 const file = e.target.files?.[0];
-                if (file) setForm((f) => ({ ...f, avatar_image: await fileToDataUrl(file) }));
+                if (!file) return;
+                const avatar_image = await fileToDataUrl(file);
+                setForm((f) => ({ ...f, avatar_image }));
               }}
             />
           </label>

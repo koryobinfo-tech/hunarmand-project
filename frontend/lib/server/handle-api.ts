@@ -120,10 +120,15 @@ async function productOut(row: Record<string, unknown>) {
 
 export async function handleApi(req: Request, parts: string[]) {
   if (req.method === "OPTIONS") return new Response(null, { status: 204 });
-  if (!hasDatabase()) {
+  if (hasDatabase()) {
+    try {
+      await initSchema();
+    } catch {
+      return handleStoreApi(req, parts);
+    }
+  } else {
     return handleStoreApi(req, parts);
   }
-  await initSchema();
   const path = "/" + parts.filter(Boolean).join("/");
   const db = getSql();
   const url = new URL(req.url);
@@ -160,10 +165,11 @@ export async function handleApi(req: Request, parts: string[]) {
       const category = url.searchParams.get("category");
       const q = url.searchParams.get("q");
       const sellerId = url.searchParams.get("seller_id");
-      let rows = await db`
+      const fetched = await db`
         SELECT p.*, c.slug AS category_slug FROM products p
         LEFT JOIN categories c ON c.id = p.category_id
         ORDER BY p.created_at DESC`;
+      let rows = [...fetched];
       if (category) rows = rows.filter((r) => r.category_id === category || r.category_slug === category);
       if (sellerId) rows = rows.filter((r) => r.seller_id === sellerId);
       const min = Number(url.searchParams.get("min_price") || 0);
@@ -611,7 +617,7 @@ export async function handleApi(req: Request, parts: string[]) {
       if (!user) return error;
       await db`
         INSERT INTO site_pages (slug, title, body, extra)
-        VALUES (${parts[1]}, ${String(body.title || "")}, ${String(body.body || "")}, ${db.json(body.extra || {})})
+        VALUES (${parts[1]}, ${String(body.title || "")}, ${String(body.body || "")}, ${db.json((body.extra ?? { ok: true }) as never)})
         ON CONFLICT (slug) DO UPDATE SET title = EXCLUDED.title, body = EXCLUDED.body, extra = EXCLUDED.extra`;
       return json((await db`SELECT * FROM site_pages WHERE slug = ${parts[1]}`)[0]);
     }

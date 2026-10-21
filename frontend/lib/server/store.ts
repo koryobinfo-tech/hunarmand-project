@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import { SEED_ADMIN_ID, SEED_BLOG, SEED_CATEGORIES, SEED_PRODUCTS, SEED_USERS } from "../catalog-seed";
 
 export type StoreUser = {
@@ -76,56 +74,15 @@ function seed(): Store {
   };
 }
 
-function filePaths() {
-  return [
-    path.join(process.cwd(), "data", "runtime-store.json"),
-    path.join("/tmp", "hunarmand-store.json"),
-  ];
-}
-
-function loadFromDisk(): Store | null {
-  for (const file of filePaths()) {
-    try {
-      if (fs.existsSync(file)) {
-        return JSON.parse(fs.readFileSync(file, "utf8")) as Store;
-      }
-    } catch {
-      /* ignore */
-    }
-  }
-  return null;
-}
-
-function saveToDisk(store: Store) {
-  for (const file of filePaths()) {
-    try {
-      fs.mkdirSync(path.dirname(file), { recursive: true });
-      fs.writeFileSync(file, JSON.stringify(store));
-    } catch {
-      /* read-only on some hosts */
-    }
-  }
-}
-
 export function getStore(): Store {
   if (!g.__hunarmandStore) {
-    g.__hunarmandStore = loadFromDisk() || seed();
-    if (!g.__hunarmandStore.users.some((u) => u.phone === "ADMIN")) {
-      const seeded = seed();
-      g.__hunarmandStore.users = seeded.users;
-    }
-    if (!g.__hunarmandStore.products.length) {
-      g.__hunarmandStore.products = seed().products;
-      g.__hunarmandStore.categories = seed().categories;
-    }
-    saveToDisk(g.__hunarmandStore);
+    g.__hunarmandStore = seed();
   }
   return g.__hunarmandStore;
 }
 
 export function saveStore(store: Store) {
   g.__hunarmandStore = store;
-  saveToDisk(store);
 }
 
 export function productView(p: StoreProduct, store = getStore()) {
