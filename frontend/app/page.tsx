@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Footer, Header } from "@/components/Header";
 import { ProductCard } from "@/components/ProductCard";
 import { Category, Product, api } from "@/lib/api";
+import { publicCategories, publicProducts } from "@/lib/catalog-seed";
 
 type Artisan = { id: string; full_name_or_company: string; craft?: string; avatar_image?: string; workshop_address?: string };
 
@@ -14,8 +15,8 @@ export default function HomePage() {
   const [artisans, setArtisans] = useState<Artisan[]>([]);
 
   useEffect(() => {
-    api.get<Product[]>("/products").then(setProducts).catch(() => setProducts([]));
-    api.get<Category[]>("/categories").then(setCategories).catch(() => setCategories([]));
+    api.get<Product[]>("/products").then((rows) => setProducts(Array.isArray(rows) && rows.length ? rows : publicProducts())).catch(() => setProducts(publicProducts()));
+    api.get<Category[]>("/categories").then((rows) => setCategories(Array.isArray(rows) && rows.length ? rows : publicCategories())).catch(() => setCategories(publicCategories()));
     api.get<Artisan[]>("/artisans").then(setArtisans).catch(() => setArtisans([]));
   }, []);
 

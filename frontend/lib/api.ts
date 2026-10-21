@@ -1,10 +1,4 @@
-function apiBase() {
-  const env = (process.env.NEXT_PUBLIC_API_URL || "/api").replace(/\/$/, "");
-  if (!env || env.includes("onrender.com") || env.includes("localhost:8000")) return "/api";
-  return env;
-}
-
-const API = apiBase();
+const API = "/api";
 
 export type Role = "buyer" | "artisan" | "admin";
 
@@ -29,6 +23,8 @@ export type Product = {
   seller_name?: string;
   category_name?: string;
   category_slug?: string;
+  region?: string;
+  material?: string;
 };
 
 export type Category = {

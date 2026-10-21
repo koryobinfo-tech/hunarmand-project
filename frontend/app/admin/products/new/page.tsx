@@ -12,7 +12,7 @@ export default function AdminNewProductPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState("");
   const [imageData, setImageData] = useState("");
-  const [form, setForm] = useState({ category_id: "", title: "", description: "", price: 100, stock: 1 });
+  const [form, setForm] = useState({ category_id: "", title: "", description: "", price: 100, stock: 1, region: "", material: "" });
 
   useEffect(() => {
     api.get<Category[]>("/categories").then((c) => {
@@ -42,6 +42,8 @@ export default function AdminNewProductPage() {
           ))}
         </select>
         <textarea className="input min-h-24" placeholder="Тавсиф" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+        <input className="input" placeholder="Минтақа (Душанбе, Хуҷанд...)" value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })} />
+        <input className="input" placeholder="Мавод (чӯб, гил, атлас...)" value={form.material} onChange={(e) => setForm({ ...form, material: e.target.value })} />
         <input className="input" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
         <p className="text-sm text-teal">≈ {formatUsdFromSomoni(form.price)}</p>
         <input className="input" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />

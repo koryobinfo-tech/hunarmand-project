@@ -62,6 +62,8 @@ export default function ProductPage() {
           <div className="text-sm text-teal">{product.category_name}</div>
           <h1 className="mt-1 text-3xl font-semibold">{product.title}</h1>
           <p className="mt-3 text-gray-600">{product.description}</p>
+          {product.region && <div className="mt-2 text-sm">Минтақа: {product.region}</div>}
+          {product.material && <div className="mt-1 text-sm">Мавод: {product.material}</div>}
           <div className="mt-4 text-2xl font-bold text-teal">{formatSomoni(product.price)}</div>
           <div className="mt-1 text-sm font-semibold text-ruby">≈ {formatUsdFromSomoni(product.price)} доллар</div>
           <div className="mt-1 text-sm">Захира: {product.stock}</div>

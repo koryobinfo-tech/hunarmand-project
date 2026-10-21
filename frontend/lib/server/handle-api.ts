@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { jwtVerify, SignJWT } from "jose";
 import { getSql, hasDatabase, initSchema } from "./db";
+import { handleStoreApi, storeAuthUser } from "./handle-store-api";
 
 const secret = new TextEncoder().encode(
   process.env.AUTH_SECRET || process.env.SECRET_KEY || "hunarmand-vercel-secret-change-me",
@@ -71,11 +72,12 @@ async function authUser(req: Request): Promise<User | null> {
   if (!raw) return null;
   try {
     const { payload } = await jwtVerify(raw, secret);
+    if (!hasDatabase()) return (await storeAuthUser(req)) as User | null;
     const db = getSql();
     const rows = await db`SELECT * FROM users WHERE id = ${String(payload.sub)} LIMIT 1`;
     return (rows[0] as User) || null;
   } catch {
-    return null;
+    return (await storeAuthUser(req)) as User | null;
   }
 }
 
@@ -118,20 +120,11 @@ async function productOut(row: Record<string, unknown>) {
 
 export async function handleApi(req: Request, parts: string[]) {
   if (req.method === "OPTIONS") return new Response(null, { status: 204 });
-  const path = "/" + parts.filter(Boolean).join("/");
-  if ((path === "/health" || path === "/") && req.method === "GET") {
-    return json({
-      status: "ok",
-      service: "hunarmand-vercel",
-      database: hasDatabase() ? "postgresql" : "missing",
-      persistent: hasDatabase(),
-      db_ok: hasDatabase(),
-    });
-  }
   if (!hasDatabase()) {
-    return err("Базаи Vercel Postgres пайваст нест. Дар Vercel: Storage → Create Database → Postgres, баъд Redeploy.", 503);
+    return handleStoreApi(req, parts);
   }
   await initSchema();
+  const path = "/" + parts.filter(Boolean).join("/");
   const db = getSql();
   const url = new URL(req.url);
   let body: Record<string, unknown> = {};
@@ -173,6 +166,10 @@ export async function handleApi(req: Request, parts: string[]) {
         ORDER BY p.created_at DESC`;
       if (category) rows = rows.filter((r) => r.category_id === category || r.category_slug === category);
       if (sellerId) rows = rows.filter((r) => r.seller_id === sellerId);
+      const min = Number(url.searchParams.get("min_price") || 0);
+      const max = Number(url.searchParams.get("max_price") || 0);
+      if (min) rows = rows.filter((r) => Number(r.price) >= min);
+      if (max) rows = rows.filter((r) => Number(r.price) <= max);
       if (q) {
         const like = q.toLowerCase();
         rows = rows.filter(
@@ -431,7 +428,9 @@ export async function handleApi(req: Request, parts: string[]) {
       const user = await authUser(req);
       if (!user) return err("Token нодуруст аст", 401);
       const orders =
-        user.role === "artisan"
+        user.role === "admin"
+          ? await db`SELECT * FROM orders ORDER BY created_at DESC`
+          : user.role === "artisan"
           ? await db`
               SELECT DISTINCT o.* FROM orders o
               JOIN order_items i ON i.order_id = o.id

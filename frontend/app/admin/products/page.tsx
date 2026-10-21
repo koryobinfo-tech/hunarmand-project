@@ -39,7 +39,8 @@ export default function AdminProductsPage() {
             <img src={p.images?.[0]} alt="" className="h-16 w-16 rounded-xl object-cover" />
             <div className="flex-1">
               <div className="font-semibold">{p.title}</div>
-              <div className="text-sm text-gray-500">{formatMoney(p.price)} · {p.category_name}</div>
+              <div className="line-clamp-1 text-xs text-gray-600">{p.description}</div>
+              <div className="text-sm text-gray-500">{formatMoney(p.price)} · {p.category_name}{p.region ? ` · ${p.region}` : ""} · захира {p.stock}</div>
             </div>
             <Link href={`/admin/products/${p.id}`} className="rounded-lg bg-navy px-3 py-2 text-sm text-white">
               Редактировать

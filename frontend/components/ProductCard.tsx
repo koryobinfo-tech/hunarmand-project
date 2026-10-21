@@ -47,7 +47,12 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
         <div className="p-3">
           <div className="font-medium">{product.title}</div>
-          <div className="mt-1 line-clamp-2 text-xs text-gray-500">{product.seller_name || "Ҳунарманд"}</div>
+          <div className="mt-1 line-clamp-2 text-xs text-gray-600">{product.description}</div>
+          <div className="mt-1 text-xs text-gray-500">
+            {product.seller_name || "Ҳунарманд"}
+            {product.region ? ` · ${product.region}` : ""}
+            {product.material ? ` · ${product.material}` : ""}
+          </div>
           <div className="mt-2 text-sm price-tag">{formatSomoni(product.price)}</div>
           <div className="mt-1 text-xs font-semibold text-teal">≈ {formatUsdFromSomoni(product.price)}</div>
         </div>

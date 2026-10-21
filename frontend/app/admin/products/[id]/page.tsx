@@ -12,12 +12,12 @@ export default function AdminEditProductPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState("");
   const [imageData, setImageData] = useState("");
-  const [form, setForm] = useState({ category_id: "", title: "", description: "", price: 0, stock: 0 });
+  const [form, setForm] = useState({ category_id: "", title: "", description: "", price: 0, stock: 0, region: "", material: "" });
 
   useEffect(() => {
     api.get<Category[]>("/categories").then(setCategories);
     api.get<Product>(`/products/${id}`).then((p) => {
-      setForm({ category_id: p.category_id, title: p.title, description: p.description, price: p.price, stock: p.stock });
+      setForm({ category_id: p.category_id, title: p.title, description: p.description, price: p.price, stock: p.stock, region: p.region || "", material: p.material || "" });
       setImageData(p.images?.[0] || "");
     });
   }, [id]);
@@ -43,6 +43,8 @@ export default function AdminEditProductPage() {
           ))}
         </select>
         <textarea className="input min-h-24" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+        <input className="input" placeholder="Минтақа" value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })} />
+        <input className="input" placeholder="Мавод" value={form.material} onChange={(e) => setForm({ ...form, material: e.target.value })} />
         <input className="input" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
         <input className="input" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />
         <input type="file" accept="image/*" onChange={async (e) => { const f = e.target.files?.[0]; if (f) setImageData(await fileToCompressedDataUrl(f)); }} />

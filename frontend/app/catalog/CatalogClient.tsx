@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { Footer, Header } from "@/components/Header";
 import { ProductCard } from "@/components/ProductCard";
 import { Category, Product, api } from "@/lib/api";
+import { publicCategories, publicProducts } from "@/lib/catalog-seed";
 
 export default function CatalogClient() {
   const params = useParams<{ slug?: string }>();
@@ -17,7 +18,10 @@ export default function CatalogClient() {
   const [max, setMax] = useState(2000);
 
   useEffect(() => {
-    api.get<Category[]>("/categories").then(setCategories).catch(() => []);
+    api
+      .get<Category[]>("/categories")
+      .then((rows) => setCategories(Array.isArray(rows) && rows.length ? rows : publicCategories()))
+      .catch(() => setCategories(publicCategories()));
   }, []);
 
   useEffect(() => {
@@ -26,7 +30,19 @@ export default function CatalogClient() {
     if (q) qs.set("q", q);
     if (min) qs.set("min_price", String(min));
     if (max) qs.set("max_price", String(max));
-    api.get<Product[]>(`/products?${qs.toString()}`).then(setProducts).catch(() => setProducts([]));
+    api
+      .get<Product[]>(`/products?${qs.toString()}`)
+      .then((rows) => {
+        const list = Array.isArray(rows) && rows.length ? rows : publicProducts();
+        setProducts(list);
+      })
+      .catch(() => setProducts(publicProducts().filter((p) => {
+        if (slug && p.category_slug !== slug && p.category_id !== slug) return false;
+        if (q && !`${p.title} ${p.description}`.toLowerCase().includes(q.toLowerCase())) return false;
+        if (min && p.price < min) return false;
+        if (max && p.price > max) return false;
+        return true;
+      })));
   }, [slug, q, min, max]);
 
   const title = useMemo(() => {
