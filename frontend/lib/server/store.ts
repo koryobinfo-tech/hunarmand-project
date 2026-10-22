@@ -89,33 +89,36 @@ function seed(): Store {
   };
 }
 
-function filePaths() {
-  return [
-    path.join(process.cwd(), "data", "hunarmand-db.json"),
-    path.join("/tmp", "hunarmand-db.json"),
-  ];
-}
+const DATA_FILE = path.join(process.cwd(), "data", "hunarmand-db.json");
+const TMP_FILE = "/tmp/hunarmand-db.json";
 
-function loadFromDisk(): Store | null {
-  for (const file of filePaths()) {
-    try {
-      if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, "utf8")) as Store;
-    } catch {
-      /* ignore */
+function readStoreFile(file: string): Store | null {
+  try {
+    if (fs.existsSync(/* turbopackIgnore: true */ file)) {
+      return JSON.parse(fs.readFileSync(/* turbopackIgnore: true */ file, "utf8")) as Store;
     }
+  } catch {
+    /* ignore */
   }
   return null;
 }
 
-function saveToDisk(store: Store) {
-  for (const file of filePaths()) {
-    try {
-      fs.mkdirSync(path.dirname(file), { recursive: true });
-      fs.writeFileSync(file, JSON.stringify(store));
-    } catch {
-      /* read-only on some hosts */
-    }
+function loadFromDisk(): Store | null {
+  return readStoreFile(DATA_FILE) || readStoreFile(TMP_FILE);
+}
+
+function writeStoreFile(file: string, store: Store) {
+  try {
+    fs.mkdirSync(/* turbopackIgnore: true */ path.dirname(file), { recursive: true });
+    fs.writeFileSync(/* turbopackIgnore: true */ file, JSON.stringify(store));
+  } catch {
+    /* read-only on some hosts */
   }
+}
+
+function saveToDisk(store: Store) {
+  writeStoreFile(DATA_FILE, store);
+  writeStoreFile(TMP_FILE, store);
 }
 
 function mergeSeed(store: Store): Store {

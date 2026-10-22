@@ -101,7 +101,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     }
     if (clean === "/products" && init.method === "POST" && data && typeof data === "object" && "id" in (data as object)) {
       const overlay = (await loadLocalCatalog<{ products?: Product[] }>()) || {};
-      const products = mergeById(overlay.products || [], [data as Product]);
+      const products = mergeById(overlay.products || [], [data as unknown as Product]);
       await saveLocalCatalog({ ...overlay, products }).catch(() => undefined);
     }
     if (clean.startsWith("/products/") && (init.method === "PUT" || init.method === "DELETE")) {
@@ -110,7 +110,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       let products = overlay.products || [];
       if (init.method === "DELETE") products = products.filter((p) => p.id !== id);
       else if (data && typeof data === "object" && "id" in (data as object)) {
-        products = mergeById(products, [data as Product]);
+        products = mergeById(products, [data as unknown as Product]);
       }
       await saveLocalCatalog({ ...overlay, products }).catch(() => undefined);
     }
