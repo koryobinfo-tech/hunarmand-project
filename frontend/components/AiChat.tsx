@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { formatMoney } from "@/lib/currency";
+import { AI_TOPICS } from "@/lib/culture";
 
 export type ChatMsg = {
   role: "user" | "assistant";
@@ -41,12 +42,12 @@ export function AiChat({ variant }: { variant: "widget" | "page" }) {
       role: "assistant",
       content:
         "Салом! Ман Ёрирасони Фарҳангии Hunarmand ҳастам. Дар бораи нақшҳои чакан, кулолгарӣ, чӯбкорӣ, заргарӣ, нигоҳубини маҳсулот ё устохонаҳо пурсед. Сурати намунаро ҳам бор карда метавонед.",
-      suggestions: ["Маънои нақшҳои чакан", "Кулолгарии Истаравшан", "Чӣ тавр чӯбро нигоҳ дорем?"],
+      suggestions: AI_TOPICS.map((t) => t.prompt),
     },
   ]);
 
   useEffect(() => {
-    api.get<Topic[]>("/ai/topics").then(setTopics).catch(() => setTopics([]));
+    api.get<Topic[]>("/ai/topics").then((rows) => setTopics(Array.isArray(rows) && rows.length ? rows : AI_TOPICS)).catch(() => setTopics(AI_TOPICS));
   }, []);
 
   useEffect(() => {

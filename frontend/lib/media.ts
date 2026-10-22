@@ -7,11 +7,11 @@ export function fileToDataUrl(file: File) {
   });
 }
 
-export async function fileToCompressedDataUrl(file: File, maxSize = 1280, quality = 0.74) {
+export async function fileToCompressedDataUrl(file: File, maxSize = 1600, quality = 0.8) {
+  if (file.size > 20 * 1024 * 1024) {
+    throw new Error("Файл набояд аз 20 МБ зиёд бошад.");
+  }
   if (!file.type.startsWith("image/")) {
-    if (file.size > 6 * 1024 * 1024) {
-      throw new Error("Видео набояд аз 6 МБ зиёд бошад, то дар базаи доимӣ сабт шавад.");
-    }
     return fileToDataUrl(file);
   }
   const bitmap = await createImageBitmap(file);

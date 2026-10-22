@@ -1,3 +1,5 @@
+import { loadLocalCatalog, mergeById, saveLocalCatalog } from "./local-db";
+
 const API = "/api";
 
 export type Role = "buyer" | "artisan" | "admin";
@@ -86,7 +88,34 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new Error(detail);
   }
   if (res.status === 204) return undefined as T;
-  return res.json();
+  const data = (await res.json()) as T;
+  if (typeof window !== "undefined") {
+    const clean = path.split("?")[0];
+    if (init.method === undefined && (clean === "/products" || clean === "/categories")) {
+      const overlay = await loadLocalCatalog<{ products?: Product[]; categories?: Category[] }>();
+      if (clean === "/products" && Array.isArray(data)) {
+        const merged = mergeById(data as Product[], overlay?.products);
+        await saveLocalCatalog({ ...overlay, products: merged }).catch(() => undefined);
+        return merged as T;
+      }
+    }
+    if (clean === "/products" && init.method === "POST" && data && typeof data === "object" && "id" in (data as object)) {
+      const overlay = (await loadLocalCatalog<{ products?: Product[] }>()) || {};
+      const products = mergeById(overlay.products || [], [data as Product]);
+      await saveLocalCatalog({ ...overlay, products }).catch(() => undefined);
+    }
+    if (clean.startsWith("/products/") && (init.method === "PUT" || init.method === "DELETE")) {
+      const overlay = (await loadLocalCatalog<{ products?: Product[] }>()) || {};
+      const id = clean.slice("/products/".length);
+      let products = overlay.products || [];
+      if (init.method === "DELETE") products = products.filter((p) => p.id !== id);
+      else if (data && typeof data === "object" && "id" in (data as object)) {
+        products = mergeById(products, [data as Product]);
+      }
+      await saveLocalCatalog({ ...overlay, products }).catch(() => undefined);
+    }
+  }
+  return data;
 }
 
 export const api = {

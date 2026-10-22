@@ -33,6 +33,7 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 /data/runtime-store.json
+/data/hunarmand-db.json
 
 # vercel
 .vercel

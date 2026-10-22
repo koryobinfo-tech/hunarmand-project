@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+import { ABOUT_BODY, ABOUT_TEAM, ABOUT_TITLE } from "../culture";
 import { SEED_ADMIN_ID, SEED_BLOG, SEED_CATEGORIES, SEED_PRODUCTS, SEED_USERS } from "../catalog-seed";
 
 export type StoreUser = {
@@ -36,17 +39,28 @@ export type StoreProduct = {
 };
 
 export type Store = {
+  version: number;
   users: StoreUser[];
   categories: { id: string; name: string; slug: string; description: string; icon_image: string }[];
   products: StoreProduct[];
   blog: { id: string; title: string; excerpt: string; body: string; cover_image: string | null }[];
   pages: { slug: string; title: string; body: string; extra: Record<string, unknown> }[];
   cart: { id: string; buyer_id: string; product_id: string; quantity: number }[];
-  orders: { id: string; buyer_id: string; total_price: number; status: string; payment_method: string; shipping_address: string; created_at: string; items: { title?: string; quantity: number; unit_price: number }[] }[];
+  orders: {
+    id: string;
+    buyer_id: string;
+    total_price: number;
+    status: string;
+    payment_method: string;
+    shipping_address: string;
+    created_at: string;
+    items: { title?: string; quantity: number; unit_price: number }[];
+  }[];
   custom_orders: Record<string, unknown>[];
   custom_messages: Record<string, unknown>[];
 };
 
+const STORE_VERSION = 4;
 const g = globalThis as typeof globalThis & { __hunarmandStore?: Store };
 
 function now() {
@@ -55,6 +69,7 @@ function now() {
 
 function seed(): Store {
   return {
+    version: STORE_VERSION,
     users: SEED_USERS.map((u) => ({ ...u, created_at: now() })),
     categories: SEED_CATEGORIES,
     products: SEED_PRODUCTS.map((p) => ({ ...p, created_at: now() })),
@@ -62,9 +77,9 @@ function seed(): Store {
     pages: [
       {
         slug: "about",
-        title: "Миссия ва дастаи мо",
-        body: "Мо ҳунармандони тоҷикро бо харидорон пайваст мекунем. Hunarmand хариди мустақим, фармоиши инфиродӣ, харитаи устохонаҳо ва ёрирасони фарҳангиро муттаҳид мекунад.",
-        extra: { team: [{ name: "Мадина Раҳимова", role: "Асосгузор" }] },
+        title: ABOUT_TITLE,
+        body: ABOUT_BODY,
+        extra: { team: ABOUT_TEAM },
       },
     ],
     cart: [],
@@ -74,15 +89,77 @@ function seed(): Store {
   };
 }
 
+function filePaths() {
+  return [
+    path.join(process.cwd(), "data", "hunarmand-db.json"),
+    path.join("/tmp", "hunarmand-db.json"),
+  ];
+}
+
+function loadFromDisk(): Store | null {
+  for (const file of filePaths()) {
+    try {
+      if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, "utf8")) as Store;
+    } catch {
+      /* ignore */
+    }
+  }
+  return null;
+}
+
+function saveToDisk(store: Store) {
+  for (const file of filePaths()) {
+    try {
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, JSON.stringify(store));
+    } catch {
+      /* read-only on some hosts */
+    }
+  }
+}
+
+function mergeSeed(store: Store): Store {
+  const base = seed();
+  const users = new Map(store.users?.map((u) => [u.id, u]));
+  for (const u of base.users) if (!users.has(u.id)) users.set(u.id, u);
+  const products = new Map(store.products?.map((p) => [p.id, p]));
+  for (const p of base.products) if (!products.has(p.id)) products.set(p.id, p);
+  const categories = store.categories?.length ? store.categories : base.categories;
+  store.users = [...users.values()];
+  store.products = [...products.values()];
+  store.categories = categories;
+  store.blog = store.blog?.length ? store.blog : base.blog;
+  store.pages = store.pages?.length ? store.pages : base.pages;
+  store.cart = store.cart || [];
+  store.orders = store.orders || [];
+  store.custom_orders = store.custom_orders || [];
+  store.custom_messages = store.custom_messages || [];
+  if (store.version !== STORE_VERSION) {
+    const about = store.pages.find((p) => p.slug === "about") || store.pages[0];
+    if (about) {
+      about.slug = "about";
+      about.title = ABOUT_TITLE;
+      about.body = ABOUT_BODY;
+      about.extra = { team: ABOUT_TEAM };
+    } else {
+      store.pages.push(base.pages[0]);
+    }
+    store.version = STORE_VERSION;
+  }
+  return store;
+}
+
 export function getStore(): Store {
   if (!g.__hunarmandStore) {
-    g.__hunarmandStore = seed();
+    g.__hunarmandStore = mergeSeed(loadFromDisk() || seed());
+    saveToDisk(g.__hunarmandStore);
   }
   return g.__hunarmandStore;
 }
 
 export function saveStore(store: Store) {
   g.__hunarmandStore = store;
+  saveToDisk(store);
 }
 
 export function productView(p: StoreProduct, store = getStore()) {

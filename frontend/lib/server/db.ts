@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import postgres from "postgres";
+import { ABOUT_BODY, ABOUT_TEAM, ABOUT_TITLE } from "../culture";
 
 const url =
   process.env.POSTGRES_URL ||
@@ -167,17 +168,10 @@ export async function initSchema() {
     `;
   }
 
-  const about = await db`SELECT slug FROM site_pages WHERE slug = 'about' LIMIT 1`;
-  if (!about[0]) {
-    await db`
-      INSERT INTO site_pages (slug, title, body, extra)
-      VALUES (
-        'about',
-        'Миссия ва дастаи мо',
-        'Мо кӯшиш мекунем, ки ҳунармандони тоҷикро бо харидорон ва сайёҳон мустақиман пайваст кунем. Hunarmand хариди мустақим, фармоиши инфиродӣ, харитаи устохонаҳо ва ёрирасони фарҳангиро муттаҳид мекунад.',
-        ${db.json({ team: [{ name: "Мадина Раҳимова", role: "Асосгузор" }] })}
-      )`;
-  }
+  await db`
+    INSERT INTO site_pages (slug, title, body, extra)
+    VALUES ('about', ${ABOUT_TITLE}, ${ABOUT_BODY}, ${db.json({ team: ABOUT_TEAM })})
+    ON CONFLICT (slug) DO UPDATE SET title = EXCLUDED.title, body = EXCLUDED.body, extra = EXCLUDED.extra`;
 
   const adminLogin = "ADMIN";
   const adminPassword = "123456";

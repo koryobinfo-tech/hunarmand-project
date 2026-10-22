@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { jwtVerify, SignJWT } from "jose";
+import { AI_TOPICS, answerCulture } from "../culture";
 import { getSql, hasDatabase, initSchema } from "./db";
 import { handleStoreApi, storeAuthUser } from "./handle-store-api";
 
@@ -342,24 +343,25 @@ export async function handleApi(req: Request, parts: string[]) {
     }
 
     if (path === "/ai/topics" && req.method === "GET") {
-      return json([
-        { id: "chakan", title: "Чакан ва нақшҳои миллӣ", prompt: "Маънои нақшҳои чаканро шарҳ диҳед" },
-        { id: "pottery", title: "Кулолгарӣ", prompt: "Дар бораи кулолгарии Истаравшан нақл кунед" },
-        { id: "wood", title: "Чӯбкорӣ", prompt: "Чӯбкориро шарҳ диҳед" },
-      ]);
+      return json(AI_TOPICS);
     }
     if (path === "/ai/chat" && req.method === "POST") {
       const related = await db`SELECT id, title, price, images FROM products ORDER BY created_at DESC LIMIT 4`;
+      const mapped = related.map((p) => ({
+        id: p.id,
+        title: p.title,
+        price: Number(p.price),
+        image: parseJson(p.images)[0] || null,
+      }));
+      const known = answerCulture(String(body.message || ""));
+      if (known) {
+        return json({ reply: known.reply, topic: known.topic, suggestions: AI_TOPICS.map((t) => t.prompt), related: mapped });
+      }
       return json({
-        reply: "Ман Ёрирасони Фарҳангии Hunarmand ҳастам. Дар бораи чакан, кулолгарӣ, чӯбкорӣ ва хӯрокаи ватанӣ пурсед.",
+        reply: "Ман Ёрирасони Фарҳангии Hunarmand ҳастам. Дар бораи чакан, кулолгарӣ ё чӯбкорӣ пурсед.",
         topic: "Фарҳанг",
-        suggestions: ["Чакан чист?", "Чӣ тавр зарфро нигоҳ дорем?"],
-        related: related.map((p) => ({
-          id: p.id,
-          title: p.title,
-          price: Number(p.price),
-          image: parseJson(p.images)[0] || null,
-        })),
+        suggestions: AI_TOPICS.map((t) => t.prompt),
+        related: mapped,
       });
     }
 

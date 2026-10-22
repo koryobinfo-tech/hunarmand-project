@@ -1,4 +1,5 @@
 import { jwtVerify, SignJWT } from "jose";
+import { AI_TOPICS, answerCulture } from "../culture";
 import { getStore, productView, saveStore, SEED_ADMIN_ID, type StoreUser } from "./store";
 
 const secret = new TextEncoder().encode(
@@ -265,18 +266,24 @@ export async function handleStoreApi(req: Request, parts: string[]) {
   }
 
   if (path === "/ai/topics" && req.method === "GET") {
-    return json([
-      { id: "chakan", title: "Чакан ва нақшҳои миллӣ", prompt: "Маънои нақшҳои чаканро шарҳ диҳед" },
-      { id: "pottery", title: "Кулолгарӣ", prompt: "Дар бораи кулолгарии Истаравшан нақл кунед" },
-      { id: "wood", title: "Чӯбкорӣ", prompt: "Чӯбкориро шарҳ диҳед" },
-    ]);
+    return json(AI_TOPICS);
   }
   if (path === "/ai/chat" && req.method === "POST") {
+    const known = answerCulture(String(body.message || ""));
+    const related = store.products.slice(0, 4).map((p) => ({ id: p.id, title: p.title, price: p.price, image: p.images[0] || null }));
+    if (known) {
+      return json({
+        reply: known.reply,
+        topic: known.topic,
+        suggestions: AI_TOPICS.map((t) => t.prompt),
+        related,
+      });
+    }
     return json({
-      reply: "Ман Ёрирасони Фарҳангии Hunarmand ҳастам. Дар бораи чакан, кулолгарӣ, чӯбкорӣ ва хӯрокаи ватанӣ пурсед.",
+      reply: "Ман Ёрирасони Фарҳангии Hunarmand ҳастам. Дар бораи чакан, кулолгарӣ ё чӯбкорӣ пурсед — мавзӯъҳоро аз тарафи чап интихоб кунед.",
       topic: "Фарҳанг",
-      suggestions: ["Чакан чист?", "Чӣ тавр зарфро нигоҳ дорем?"],
-      related: store.products.slice(0, 4).map((p) => ({ id: p.id, title: p.title, price: p.price, image: p.images[0] || null })),
+      suggestions: AI_TOPICS.map((t) => t.prompt),
+      related,
     });
   }
 
