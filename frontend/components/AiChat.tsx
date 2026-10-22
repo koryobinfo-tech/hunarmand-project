@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { formatMoney } from "@/lib/currency";
-import { AI_TOPICS } from "@/lib/culture";
+import { AI_TOPICS, answerCulture } from "@/lib/culture";
 
 export type ChatMsg = {
   role: "user" | "assistant";
@@ -31,7 +31,7 @@ async function sendChat(message: string, imageUrl: string | null, history: ChatM
 }
 
 export function AiChat({ variant }: { variant: "widget" | "page" }) {
-  const [topics, setTopics] = useState<Topic[]>([]);
+  const [topics, setTopics] = useState<Topic[]>(AI_TOPICS);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState("");
@@ -45,10 +45,6 @@ export function AiChat({ variant }: { variant: "widget" | "page" }) {
       suggestions: AI_TOPICS.map((t) => t.prompt),
     },
   ]);
-
-  useEffect(() => {
-    api.get<Topic[]>("/ai/topics").then((rows) => setTopics(Array.isArray(rows) && rows.length ? rows : AI_TOPICS)).catch(() => setTopics(AI_TOPICS));
-  }, []);
 
   useEffect(() => {
     boxRef.current?.scrollTo({ top: boxRef.current.scrollHeight, behavior: "smooth" });
@@ -71,6 +67,19 @@ export function AiChat({ variant }: { variant: "widget" | "page" }) {
     setPreview("");
     setBusy(true);
     try {
+      const local = !image ? answerCulture(user.content) : null;
+      if (local) {
+        setMessages([
+          ...next,
+          {
+            role: "assistant",
+            content: local.reply,
+            topic: local.topic,
+            suggestions: AI_TOPICS.map((t) => t.prompt),
+          },
+        ]);
+        return;
+      }
       const res = await sendChat(user.content, image || null, next);
       setMessages([
         ...next,

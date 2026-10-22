@@ -19,10 +19,14 @@ export default function AboutPage() {
       .get<Page>("/pages/about")
       .then((p) => {
         const extra = typeof p.extra === "string" ? JSON.parse(p.extra) : p.extra;
+        const body = p.body?.includes("Hunarmand.tj") ? p.body : ABOUT_BODY;
+        const team = extra?.team?.some((m: { name: string }) => m.name.includes("Сафаралиева"))
+          ? extra
+          : { team: ABOUT_TEAM };
         setPage({
-          title: p.title || ABOUT_TITLE,
-          body: p.body || ABOUT_BODY,
-          extra: extra?.team?.length ? extra : { team: ABOUT_TEAM },
+          title: p.title?.includes("бораи") ? p.title : ABOUT_TITLE,
+          body,
+          extra: team,
         });
       })
       .catch(() => undefined);

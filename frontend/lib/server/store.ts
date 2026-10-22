@@ -60,7 +60,7 @@ export type Store = {
   custom_messages: Record<string, unknown>[];
 };
 
-const STORE_VERSION = 4;
+const STORE_VERSION = 5;
 const g = globalThis as typeof globalThis & { __hunarmandStore?: Store };
 
 function now() {
@@ -130,22 +130,20 @@ function mergeSeed(store: Store): Store {
   store.categories = categories;
   store.blog = store.blog?.length ? store.blog : base.blog;
   store.pages = store.pages?.length ? store.pages : base.pages;
+  const about = store.pages.find((p) => p.slug === "about") || store.pages[0];
+  if (about) {
+    about.slug = "about";
+    about.title = ABOUT_TITLE;
+    about.body = ABOUT_BODY;
+    about.extra = { team: ABOUT_TEAM };
+  } else {
+    store.pages.push(base.pages[0]);
+  }
   store.cart = store.cart || [];
   store.orders = store.orders || [];
   store.custom_orders = store.custom_orders || [];
   store.custom_messages = store.custom_messages || [];
-  if (store.version !== STORE_VERSION) {
-    const about = store.pages.find((p) => p.slug === "about") || store.pages[0];
-    if (about) {
-      about.slug = "about";
-      about.title = ABOUT_TITLE;
-      about.body = ABOUT_BODY;
-      about.extra = { team: ABOUT_TEAM };
-    } else {
-      store.pages.push(base.pages[0]);
-    }
-    store.version = STORE_VERSION;
-  }
+  store.version = STORE_VERSION;
   return store;
 }
 

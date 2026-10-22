@@ -47,9 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const me = await api.get<Profile>("/auth/me");
       setProfile(me);
     } catch {
-      setStoredAuth(null);
-      setAuth(null);
-      setProfile(null);
+      /* Keep the session: serverless instances can miss in-memory users after login. */
     }
   }
 

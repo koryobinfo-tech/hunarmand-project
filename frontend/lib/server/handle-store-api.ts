@@ -73,7 +73,15 @@ export async function handleStoreApi(req: Request, parts: string[]) {
   if (req.method === "OPTIONS") return new Response(null, { status: 204 });
 
   if ((path === "/health" || path === "/") && req.method === "GET") {
-    return json({ status: "ok", service: "hunarmand-store", database: "local-store", persistent: true, db_ok: true });
+    return json({
+      status: "ok",
+      service: "hunarmand-store",
+      database: "local-store",
+      persistent: true,
+      db_ok: true,
+      culture_version: 5,
+      max_upload_mb: 20,
+    });
   }
   if (path === "/storage" && req.method === "GET") {
     return json({
